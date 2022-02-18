@@ -11,7 +11,7 @@
 [submodule "cereal"]
 	path = cereal
 	url = https://github.com/zorrobyte/cereal.git
-	branch = master
+	branch = zorropilot
 [submodule "rednose_repo"]
 	path = rednose_repo
 	url = ../../commaai/rednose.git
