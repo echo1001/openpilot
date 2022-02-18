@@ -1,4 +1,4 @@
-This is my fork for my 2019 Rav4
+This is my fork for my 2019 Rav4. Should be good for all TSS2, however, YMMV.
 
 This adds:
 * TSS2 Distane Button with 3 profiles
