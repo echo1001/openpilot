@@ -70,7 +70,7 @@ class CarController():
       # On TSS2 cars, the LTA and STEER_TORQUE_SENSOR messages use relative steering angle signals that start
       # at 0 degrees, so we need to offset the commanded angle as well.
       # Also need to pulse steer_req to prevent 5 second steering lockout in some cases
-      steer_req = active and (frame % 100 != 0)
+      steer_req = active #and (frame % 100 != 0)
       percentage = interp(abs(CS.out.steeringTorque), [50, 100], [100, 0])
       commanded_angle = interp(percentage, [-10, 100], [CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg, 
                     actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg])
