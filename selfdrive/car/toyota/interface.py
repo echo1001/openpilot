@@ -200,7 +200,7 @@ class CarInterface(CarInterfaceBase):
 
     if(candidate in TSS2_CAR):
       ret.steerRateCost = 0.1
-      ret.steerActuatorDelay = 0.35
+      ret.steerActuatorDelay = 0.4
       ret.steerControlType = car.CarParams.SteerControlType.angle
 
     # TODO: get actual value, for now starting with reasonable value for

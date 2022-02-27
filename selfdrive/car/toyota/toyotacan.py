@@ -23,7 +23,7 @@ def create_lta_steer_command(packer, commanded_angle, steer_req, frame):
     "STEER_ANGLE_CMD": commanded_angle,
     "STEER_REQUEST": steer_req,
     "STEER_REQUEST_2": steer_req,
-    "BIT": steer_req, # TODO: figure out of this needs to be pulsed 0 every second
+    "BIT": frame % 50 == 0, # TODO: figure out of this needs to be pulsed 0 every second
   }
   return packer.make_can_msg("STEERING_LTA", 0, values)
 
