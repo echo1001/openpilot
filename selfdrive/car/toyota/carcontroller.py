@@ -4,7 +4,7 @@ from selfdrive.car import apply_toyota_steer_torque_limits, create_gas_intercept
 from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_command, \
                                            create_accel_command, create_acc_cancel_command, \
                                            create_fcw_command, create_lta_steer_command
-from selfdrive.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_TIMER_CAR, TSS2_CAR, \
+from selfdrive.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_TIMER_CAR, \
                                         MIN_ACC_SPEED, PEDAL_TRANSITION, CarControllerParams
 from opendbc.can.packer import CANPacker
 
@@ -83,14 +83,18 @@ class CarController:
     # toyota can trace shows this message at 42Hz, with counter adding alternatively 1 and 2;
     # sending it at 100Hz seem to allow a higher rate limit, as the rate limit seems imposed
     # on consecutive messages
-    can_sends.append(create_steer_command(self.packer, apply_steer, apply_steer_req, self.frame))
-    if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
-      can_sends.append(create_lta_steer_command(self.packer, 0, 0, self.frame // 2))
+    # can_sends.append(create_steer_command(self.packer, apply_steer, apply_steer_req, frame))
+    # if frame % 2 == 0 and CS.CP.carFingerprint in TSS2_CAR:
+    #   can_sends.append(create_lta_steer_command(self.packer, 0, 0, frame // 2))
 
     # LTA mode. Set ret.steerControlType = car.CarParams.SteerControlType.angle and whitelist 0x191 in the panda
-    # if self.frame % 2 == 0:
-    #   can_sends.append(create_steer_command(self.packer, 0, 0, self.frame // 2))
-    #   can_sends.append(create_lta_steer_command(self.packer, actuators.steeringAngleDeg, apply_steer_req, self.frame // 2))
+    can_sends.append(create_steer_command(self.packer, 0, 0, frame))
+    # On TSS2 cars, the LTA and STEER_TORQUE_SENSOR messages use relative steering angle signals that start
+    # at 0 degrees, so we need to offset the commanded angle as well.
+    can_sends.append(create_lta_steer_command(self.packer, actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
+                                              CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
+                                              CS.out.steeringTorque,
+                                              apply_steer_req, frame))
 
     # we can spam can to cancel the system even if we are using lat only control
     if (self.frame % 3 == 0 and self.CP.openpilotLongitudinalControl) or pcm_cancel_cmd:
