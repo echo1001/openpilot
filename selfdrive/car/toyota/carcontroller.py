@@ -88,13 +88,13 @@ class CarController:
     #   can_sends.append(create_lta_steer_command(self.packer, 0, 0, frame // 2))
 
     # LTA mode. Set ret.steerControlType = car.CarParams.SteerControlType.angle and whitelist 0x191 in the panda
-    can_sends.append(create_steer_command(self.packer, 0, 0, frame))
+    can_sends.append(create_steer_command(self.packer, 0, 0, self.frame))
     # On TSS2 cars, the LTA and STEER_TORQUE_SENSOR messages use relative steering angle signals that start
     # at 0 degrees, so we need to offset the commanded angle as well.
     can_sends.append(create_lta_steer_command(self.packer, actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
                                               CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
                                               CS.out.steeringTorque,
-                                              apply_steer_req, frame))
+                                              apply_steer_req, self.frame))
 
     # we can spam can to cancel the system even if we are using lat only control
     if (self.frame % 3 == 0 and self.CP.openpilotLongitudinalControl) or pcm_cancel_cmd:
