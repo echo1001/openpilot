@@ -2,8 +2,8 @@ import numpy as np
 from common.realtime import sec_since_boot, DT_MDL
 from common.numpy_fast import interp
 from selfdrive.swaglog import cloudlog
-from selfdrive.controls.lib.lateral_mpc_lib.lat_mpc import LateralMpc
-from selfdrive.controls.lib.drive_helpers import CONTROL_N, MPC_COST_LAT, LAT_MPC_N, CAR_ROTATION_RADIUS
+from selfdrive.controls.lib.lateral_mpc_lib.lat_mpc import LateralMpc, X_DIM
+from selfdrive.controls.lib.drive_helpers import CONTROL_N, MPC_COST_LAT, LAT_MPC_N
 from selfdrive.controls.lib.lane_planner import LanePlanner, TRAJECTORY_SIZE
 from selfdrive.controls.lib.desire_helper import DesireHelper
 import cereal.messaging as messaging
@@ -11,13 +11,15 @@ from cereal import log
 
 
 class LateralPlanner:
-  def __init__(self, CP, use_lanelines=True, wide_camera=False):
+  def __init__(self, CP, use_lanelines=True, wide_camera=False, use_rot_rad=False):
     self.use_lanelines = use_lanelines
     self.LP = LanePlanner(wide_camera)
     self.DH = DesireHelper()
 
     self.last_cloudlog_t = 0
     self.steer_rate_cost = CP.steerRateCost
+    self.factor1 = (CP.wheelbase) if use_rot_rad else 0.0
+    self.factor2 = ((2 * CP.centerToFront * CP.mass) / (CP.wheelbase * CP.tireStiffnessRear)) if use_rot_rad else 0.0
     self.solution_invalid_cnt = 0
 
     self.path_xyz = np.zeros((TRAJECTORY_SIZE, 3))
@@ -27,9 +29,9 @@ class LateralPlanner:
     self.y_pts = np.zeros(TRAJECTORY_SIZE)
 
     self.lat_mpc = LateralMpc()
-    self.reset_mpc(np.zeros(4))
+    self.reset_mpc(np.zeros(X_DIM))
 
-  def reset_mpc(self, x0=np.zeros(4)):
+  def reset_mpc(self, x0=np.zeros(X_DIM)):
     self.x0 = x0
     self.lat_mpc.reset(x0=self.x0)
 
@@ -42,8 +44,12 @@ class LateralPlanner:
     self.LP.parse_model(md)
     if len(md.position.x) == TRAJECTORY_SIZE and len(md.orientation.x) == TRAJECTORY_SIZE:
       self.path_xyz = np.column_stack([md.position.x, md.position.y, md.position.z])
+      self.speed_forward = np.linalg.norm(np.column_stack([md.velocity.x, md.velocity.y, md.velocity.z]), axis=1)
       self.t_idxs = np.array(md.position.t)
       self.plan_yaw = list(md.orientation.z)
+      self.plan_yaw_rate = list(md.orientationRate.z)
+      self.lateral_acc = self.speed_forward * self.plan_yaw_rate
+      self.jerk = np.gradient(self.lateral_acc, self.t_idxs)
     if len(md.position.xStd) == TRAJECTORY_SIZE:
       self.path_xyz_stds = np.column_stack([md.position.xStd, md.position.yStd, md.position.zStd])
 
@@ -59,26 +65,27 @@ class LateralPlanner:
     # Calculate final driving path and set MPC costs
     if self.use_lanelines:
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, MPC_COST_LAT.LAT_JERK)
     else:
       d_path_xyz = self.path_xyz
-      path_cost = np.clip(abs(self.path_xyz[0, 1] / self.path_xyz_stds[0, 1]), 0.5, 1.5) * MPC_COST_LAT.PATH
-      # Heading cost is useful at low speed, otherwise end of plan can be off-heading
-      # heading_cost = interp(v_ego, [5.0, 10.0], [MPC_COST_LAT.HEADING, 0.0])
-      self.lat_mpc.set_weights(path_cost, MPC_COST_LAT.HEADING, self.steer_rate_cost)
+      heading_cost = interp(v_ego, [5.0, 10.0], [MPC_COST_LAT.HEADING, MPC_COST_LAT.HEADING_LL])
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, MPC_COST_LAT.LAT_JERK)
 
-    y_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], np.linalg.norm(d_path_xyz, axis=1), d_path_xyz[:, 1])
-    heading_pts = np.interp(v_ego * self.t_idxs[:LAT_MPC_N + 1], np.linalg.norm(self.path_xyz, axis=1), self.plan_yaw)
+    y_pts = d_path_xyz[:LAT_MPC_N + 1, 1]
+    heading_pts = self.plan_yaw[:LAT_MPC_N + 1]
+    jerk_pts = self.jerk[:LAT_MPC_N + 1]
     self.y_pts = y_pts
 
     assert len(y_pts) == LAT_MPC_N + 1
     assert len(heading_pts) == LAT_MPC_N + 1
-    # self.x0[4] = v_ego
-    p = np.array([v_ego, CAR_ROTATION_RADIUS])
+    # p = np.array([v_ego, self.factor1 - (self.factor2 * v_ego**2)])
+    lateral_factor = np.max(np.column_stack((np.zeros(LAT_MPC_N + 1), self.factor1 - (self.factor2 * self.speed_forward[:LAT_MPC_N + 1]**2))), axis=1)
+    p = np.column_stack((self.speed_forward[:LAT_MPC_N + 1], lateral_factor))
     self.lat_mpc.run(self.x0,
                      p,
                      y_pts,
-                     heading_pts)
+                     heading_pts,
+                     jerk_pts)
     # init state for next
     self.x0[3] = interp(DT_MDL, self.t_idxs[:LAT_MPC_N + 1], self.lat_mpc.x_sol[:, 3])
 
