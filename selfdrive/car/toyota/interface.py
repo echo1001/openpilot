@@ -202,7 +202,7 @@ class CarInterface(CarInterfaceBase):
     ret.centerToFront = ret.wheelbase * 0.44
 
     if candidate in TSS2_CAR:
-      ret.steerRateCost = 0.5
+      ret.steerRateCost = 0.25
       ret.steerActuatorDelay = 0.25
       ret.steerControlType = car.CarParams.SteerControlType.angle
 
