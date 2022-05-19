@@ -80,21 +80,25 @@ class CarController:
     # *** control msgs ***
     # print("steer {0} {1} {2} {3}".format(apply_steer, min_lim, max_lim, CS.steer_torque_motor)
 
-    # toyota can trace shows this message at 42Hz, with counter adding alternatively 1 and 2;
-    # sending it at 100Hz seem to allow a higher rate limit, as the rate limit seems imposed
-    # on consecutive messages
-    # can_sends.append(create_steer_command(self.packer, apply_steer, apply_steer_req, frame))
-    # if frame % 2 == 0 and CS.CP.carFingerprint in TSS2_CAR:
-    #   can_sends.append(create_lta_steer_command(self.packer, 0, 0, frame // 2))
+    if self.CP.steerControlType == car.CarParams.SteerControlType.angle:
 
-    # LTA mode. Set ret.steerControlType = car.CarParams.SteerControlType.angle and whitelist 0x191 in the panda
-    can_sends.append(create_steer_command(self.packer, 0, 0, self.frame))
-    # On TSS2 cars, the LTA and STEER_TORQUE_SENSOR messages use relative steering angle signals that start
-    # at 0 degrees, so we need to offset the commanded angle as well.
-    can_sends.append(create_lta_steer_command(self.packer, actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
-                                              CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
-                                              CS.out.steeringTorque,
-                                              apply_steer_req, self.frame))
+        # LTA mode. Set ret.steerControlType = car.CarParams.SteerControlType.angle and whitelist 0x191 in the panda
+        can_sends.append(create_steer_command(self.packer, 0, 0, self.frame))
+        # On TSS2 cars, the LTA and STEER_TORQUE_SENSOR messages use relative steering angle signals that start
+        # at 0 degrees, so we need to offset the commanded angle as well.
+        can_sends.append(create_lta_steer_command(self.packer, actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
+                                                CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
+                                                CS.out.steeringTorque,
+                                                apply_steer_req, self.frame))
+
+    else:
+        # toyota can trace shows this message at 42Hz, with counter adding alternatively 1 and 2;
+        # sending it at 100Hz seem to allow a higher rate limit, as the rate limit seems imposed
+        # on consecutive messages
+        can_sends.append(create_steer_command(self.packer, apply_steer, apply_steer_req, self.frame))
+        if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
+            can_sends.append(create_lta_steer_command(self.packer, 0, 0, self.frame // 2))
+
 
     # we can spam can to cancel the system even if we are using lat only control
     if (self.frame % 3 == 0 and self.CP.openpilotLongitudinalControl) or pcm_cancel_cmd:
