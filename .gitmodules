@@ -4,7 +4,8 @@
 	branch = unsafe-lta
 [submodule "opendbc"]
 	path = opendbc
-	url = ../../commaai/opendbc.git
+	url = https://github.com/echo1001/opendbc.git
+	branch = lta-status
 [submodule "laika_repo"]
 	path = laika_repo
 	url = ../../commaai/laika.git
