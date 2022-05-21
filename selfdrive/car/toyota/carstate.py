@@ -88,7 +88,7 @@ class CarState(CarStateBase):
 
 
     if self.CP.carFingerprint in TSS2_CAR:
-      ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LKA_STATE"] in (0, 9, 21, 25) or cp.vl["EPS_STATUS"]["LTA_STATE"] > 1
+      ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LKA_STATE"] in (0, 9, 21, 25) or cp.vl["EPS_STATUS"]["LTA_STATE"] in (2, 4, 6)
 
     # 17 is a fault from a prolonged high torque delta between cmd and user
     ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LKA_STATE"] == 17
