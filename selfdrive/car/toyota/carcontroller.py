@@ -26,6 +26,8 @@ class CarController:
     self.gas = 0
     self.accel = 0
 
+    self.last_apply = 0
+
   def update(self, CC, CS):
     actuators = CC.actuators
     hud_control = CC.hudControl
@@ -81,15 +83,17 @@ class CarController:
     # print("steer {0} {1} {2} {3}".format(apply_steer, min_lim, max_lim, CS.steer_torque_motor)
 
     if self.CP.steerControlType == car.CarParams.SteerControlType.angle:
+        apply_bit = 1 if self.last_apply != apply_steer_req else 0
+        self.last_apply = apply_steer_req 
 
-        # LTA mode. Set ret.steerControlType = car.CarParams.SteerControlType.angle and whitelist 0x191 in the panda
+        # LTA mode. Set ret.steerControlType = car.Car  Params.SteerControlType.angle and whitelist 0x191 in the panda
         can_sends.append(create_steer_command(self.packer, 0, 0, self.frame))
         # On TSS2 cars, the LTA and STEER_TORQUE_SENSOR messages use relative steering angle signals that start
         # at 0 degrees, so we need to offset the commanded angle as well.
         can_sends.append(create_lta_steer_command(self.packer, actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
                                                 CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
                                                 CS.out.steeringTorque,
-                                                apply_steer_req, self.frame))
+                                                apply_steer_req, self.frame, apply_bit))
 
     else:
         # toyota can trace shows this message at 42Hz, with counter adding alternatively 1 and 2;
