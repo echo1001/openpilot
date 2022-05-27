@@ -124,7 +124,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 14.3
       tire_stiffness_factor = 0.7933
       ret.mass = 3585. * CV.LB_TO_KG + STD_CARGO_KG  # Average between ICE and Hybrid
-      set_lat_tune(ret.lateralTuning, LatTunes.TORQUE, MAX_LAT_ACCEL=3.4, FRICTION=0.065)
+      set_lat_tune(ret.lateralTuning, LatTunes.TORQUE, MAX_LAT_ACCEL=3.4, FRICTION=0.06)
 
     elif candidate in (CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2):
       stop_and_go = True
