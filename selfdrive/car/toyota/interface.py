@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from cereal import car
+from common.params import Params
 from common.conversions import Conversions as CV
 from panda import Panda
 from selfdrive.car.toyota.tunes import LatTunes, LongTunes, set_long_tune, set_lat_tune
@@ -123,7 +124,16 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 14.3
       tire_stiffness_factor = 0.7933
       ret.mass = 3585. * CV.LB_TO_KG + STD_CARGO_KG  # Average between ICE and Hybrid
-      ret.steerControlType = car.CarParams.SteerControlType.angle
+      ret.maxLateralAccel = 2.5
+      set_lat_tune(ret.lateralTuning, LatTunes.PID_D)
+
+      # 2019+ RAV4 TSS2 uses two different steering racks and specific tuning seems to be necessary.
+      # See https://github.com/commaai/openpilot/pull/21429#issuecomment-873652891
+      for fw in car_fw:
+        if fw.ecu == "eps" and (fw.fwVersion.startswith(b'\x02') or fw.fwVersion in [b'8965B42181\x00\x00\x00\x00\x00\x00']):
+          #set_lat_tune(ret.lateralTuning, LatTunes.PID_I)
+          set_lat_tune(ret.lateralTuning, LatTunes.TORQUE, MAX_LAT_ACCEL=3.4, FRICTION=0.061)
+          break
 
     elif candidate in (CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2):
       stop_and_go = True
@@ -131,8 +141,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 13.9
       tire_stiffness_factor = 0.444  # not optimized yet
       ret.mass = 3060. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.steerControlType = car.CarParams.SteerControlType.angle
-      # set_lat_tune(ret.lateralTuning, LatTunes.PID_D)
+      set_lat_tune(ret.lateralTuning, LatTunes.PID_D)
 
     elif candidate in (CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2, CAR.LEXUS_ESH):
       stop_and_go = True
@@ -200,7 +209,8 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 1.
     ret.centerToFront = ret.wheelbase * 0.44
 
-    if(candidate in TSS2_CAR):
+    params = Params()
+    if (candidate in TSS2_CAR) and params.get_bool('EndToEndToggle'):
       ret.steerRateCost = 0.25
       ret.steerActuatorDelay = 0.3
       ret.steerControlType = car.CarParams.SteerControlType.angle
