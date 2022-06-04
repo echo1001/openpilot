@@ -209,7 +209,7 @@ class CarInterface(CarInterfaceBase):
     ret.centerToFront = ret.wheelbase * 0.44
 
     params = Params()
-    if (candidate in TSS2_CAR) and params.get_bool('EndToEndToggle'):
+    if (candidate in TSS2_CAR) and params.get_bool('LTAMode'):
       ret.steerRateCost = 0.25
       ret.steerActuatorDelay = 0.3
       ret.steerControlType = car.CarParams.SteerControlType.angle
