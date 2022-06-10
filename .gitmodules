@@ -10,7 +10,8 @@
 	url = ../../commaai/laika.git
 [submodule "cereal"]
 	path = cereal
-	url = ../../commaai/cereal.git
+	url = https://github.com/echo1001/cereal.git
+	branch = distance-lines
 [submodule "rednose_repo"]
 	path = rednose_repo
 	url = ../../commaai/rednose.git
