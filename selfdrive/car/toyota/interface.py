@@ -53,6 +53,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 17.4
       tire_stiffness_factor = 0.5533
       ret.mass = 3340. * CV.LB_TO_KG + STD_CARGO_KG
+      # TODO override until there is enough data
       ret.maxLateralAccel = 1.8
       # TODO override until there is enough data
       torque_params = CarInterfaceBase.get_torque_params(CAR.PRIUS)
@@ -126,6 +127,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 14.3
       tire_stiffness_factor = 0.7933
       ret.mass = 3585. * CV.LB_TO_KG + STD_CARGO_KG  # Average between ICE and Hybrid
+
+      # TODO: remove once there's data
+      if candidate == CAR.RAV4_TSS2_2022:
+        ret.maxLateralAccel = CarInterfaceBase.get_torque_params(CAR.RAV4H_TSS2_2022)['MAX_LAT_ACCEL_MEASURED']
 
       # 2019+ RAV4 TSS2 uses two different steering racks and specific tuning seems to be necessary.
       # See https://github.com/commaai/openpilot/pull/21429#issuecomment-873652891
@@ -258,6 +263,8 @@ class CarInterface(CarInterfaceBase):
     elif candidate in TSS2_CAR:
       set_long_tune(ret.longitudinalTuning, LongTunes.TSS2)
       ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
+      ret.vEgoStopping = 0.25  # car comes to a full stop around this speed
+      ret.vEgoStarting = 0.25
     else:
       set_long_tune(ret.longitudinalTuning, LongTunes.TSS)
 
