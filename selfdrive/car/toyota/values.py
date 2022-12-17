@@ -23,7 +23,7 @@ class CarControllerParams:
 
   # stock LTA is 0 to 0.05 going straight
   # and 0.1 to 0.4 when turning (max seen is 0.6303)
-  ANGLE_RATE_LIMIT_UP = AngleRateLimit(speed_bp=[0., 5., 15.], angle_v=[2.5, 1.5, 0.5])
+  ANGLE_RATE_LIMIT_UP = AngleRateLimit(speed_bp=[0., 5., 15.], angle_v=[2.5, 1.5, 1.5])
   ANGLE_RATE_LIMIT_DOWN = AngleRateLimit(speed_bp=[0., 5., 15.], angle_v=[2.5, 2.5, 1.5])
 
   # needs to be within +-3 degrees of current angle to avoid windup
@@ -749,6 +749,7 @@ FW_VERSIONS = {
       b'\x018966312Q8000\x00\x00\x00\x00',
       b'\x018966312R0000\x00\x00\x00\x00',
       b'\x018966312R0100\x00\x00\x00\x00',
+      b'\x018966312R0200\x00\x00\x00\x00',
       b'\x018966312R1000\x00\x00\x00\x00',
       b'\x018966312R1100\x00\x00\x00\x00',
       b'\x018966312R3100\x00\x00\x00\x00',
@@ -802,6 +803,7 @@ FW_VERSIONS = {
       b'\x01F152612B60\x00\x00\x00\x00\x00\x00',
       b'\x01F152612B61\x00\x00\x00\x00\x00\x00',
       b'\x01F152612B62\x00\x00\x00\x00\x00\x00',
+      b'\x01F152612B70\x00\x00\x00\x00\x00\x00',
       b'\x01F152612B71\x00\x00\x00\x00\x00\x00',
       b'\x01F152612B81\x00\x00\x00\x00\x00\x00',
       b'\x01F152612B90\x00\x00\x00\x00\x00\x00',
@@ -1672,6 +1674,7 @@ FW_VERSIONS = {
       b'\x018966378B2100\x00\x00\x00\x00',
       b'\x018966378B3000\x00\x00\x00\x00',
       b'\x018966378G3000\x00\x00\x00\x00',
+      b'\x018966378B2000\x00\x00\x00\x00',
     ],
     (Ecu.abs, 0x7b0, None): [
       b'\x01F152678221\x00\x00\x00\x00\x00\x00',

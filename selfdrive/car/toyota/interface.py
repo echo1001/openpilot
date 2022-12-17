@@ -227,7 +227,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.init('pid')
       ret.lateralTuning.pid.kiBP = [0.0]
       ret.lateralTuning.pid.kpBP = [0.0]
-      ret.lateralTuning.pid.kpV = [1.0]
+      ret.lateralTuning.pid.kpV = [0.2]
       ret.lateralTuning.pid.kiV = [0.0]  # this causes huge wind-ups after turns (70 degrees in integral!)
       ret.lateralTuning.pid.kf = 1.0
 
@@ -249,6 +249,8 @@ class CarInterface(CarInterfaceBase):
       tune.kiBP = [0., 5., 12., 20., 27.]
       tune.kiV = [.35, .23, .20, .17, .1]
       if candidate in TSS2_CAR:
+        ret.vEgoStopping = 0.25
+        ret.vEgoStarting = 0.25
         ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
     else:
       tune.kpBP = [0., 5., 35.]
