@@ -41,7 +41,7 @@ class LatControlPID(LatControl):
       self.pid.reset()
     else:
       # offset does not contribute to resistive torque
-      steer_feedforward = self.get_steer_feedforward(angle_steers_des_no_offset, CS.vEgo)
+      steer_feedforward = self.get_steer_feedforward(angle_steers_des, CS.vEgo)
 
       output_steer = self.pid.update(error, override=CS.steeringPressed,
                                      feedforward=steer_feedforward, speed=CS.vEgo)
@@ -53,7 +53,7 @@ class LatControlPID(LatControl):
 
       if self.CP.steerControlType != SteerControlType.torque:
         angle_control_saturated = abs(angle_steers_des - CS.steeringAngleDeg) > STEER_ANGLE_SATURATION_THRESHOLD
-        pid_log.saturated = self._check_saturation(angle_control_saturated, CS, steer_limited)
+        pid_log.saturated = self._check_saturation(angle_control_saturated, CS, False)
       else:
         pid_log.saturated = self._check_saturation(self.steer_max - abs(output_steer) < 1e-3, CS, steer_limited)
 

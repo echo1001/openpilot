@@ -24,7 +24,7 @@ MAX_USER_TORQUE = 500
 
 # EPS ignores commands above this angle and causes PCS faults
 MAX_STEER_ANGLE = 94.9461  # deg
-MAX_ANGLE_LATERAL_ACCEL = 3.0  # m/s^2
+MAX_ANGLE_LATERAL_ACCEL = 3.5  # m/s^2
 
 
 class CarController:
@@ -82,15 +82,11 @@ class CarController:
       apply_angle = actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
       torque_sensor_angle = CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
 
-      # driver torque blending  - NOW HANDLED IN TOYOTACAN
-      # percentage = interp(abs(CS.out.steeringTorque), [40, 100], [100, 0])
-      # apply_angle = interp(percentage, [-10, 100], [torque_sensor_angle, apply_angle])
-
       # limit max angle error between cmd and actual to reduce EPS integral windup
       # TODO: can we configure this with a signal?
-      # apply_angle = clip(apply_angle,
-      #                    torque_sensor_angle - self.params.ANGLE_DELTA_MAX,
-      #                    torque_sensor_angle + self.params.ANGLE_DELTA_MAX)
+      apply_angle = clip(apply_angle,
+                         -abs(torque_sensor_angle) - self.params.ANGLE_DELTA_MAX,
+                         abs(torque_sensor_angle) + self.params.ANGLE_DELTA_MAX)
 
       # Clip max angle to acceptable lateral accel limits
       v_ego = max(CS.out.vEgo, 5.)
@@ -190,7 +186,7 @@ class CarController:
       if self.frame % 100 == 0 or send_ui:
         can_sends.append(create_ui_command(self.packer, steer_alert, pcm_cancel_cmd, hud_control.leftLaneVisible,
                                            hud_control.rightLaneVisible, hud_control.leftLaneDepart,
-                                           hud_control.rightLaneDepart, CC.enabled))
+                                           hud_control.rightLaneDepart, CC.enabled, CS.lkas_hud))
 
       if (self.frame % 100 == 0 or send_ui) and self.CP.enableDsu:
         can_sends.append(create_fcw_command(self.packer, fcw_alert))
